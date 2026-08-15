@@ -15,7 +15,7 @@ updates:
       - "python"
     open-pull-requests-limit: 5
     reviewers:
-      - "exTerEX"
+      - "andreassag"
     target-branch: "main"
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -29,7 +29,7 @@ updates:
       - "actions"
     open-pull-requests-limit: 5
     reviewers:
-      - "exTerEX"
+      - "andreassag"
     target-branch: "main"
   - package-ecosystem: "docker"
     directory: "/"
@@ -43,5 +43,5 @@ updates:
       - "docker"
     open-pull-requests-limit: 5
     reviewers:
-      - "exTerEX"
+      - "andreassag"
     target-branch: "main"

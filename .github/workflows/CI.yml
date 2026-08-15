@@ -50,7 +50,7 @@ jobs:
       uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: exTerEX/noaa
+        slug: andreassag/noaa
         fail_ci_if_error: true
         files: ./coverage.xml
         flags: unittests
