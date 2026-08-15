@@ -1,6 +1,6 @@
 FROM python:3.14-slim
 
-LABEL org.opencontainers.image.source="https://github.com/exTerEX/noaa"
+LABEL org.opencontainers.image.source="https://github.com/andreassag/noaa"
 LABEL org.opencontainers.image.description="NOAA Climate Data Online API Client"
 LABEL org.opencontainers.image.licenses="MIT"
 
