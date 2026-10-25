@@ -336,3 +336,47 @@ Compare climate data across different locations:
         city = station_lookup.get(station_id, station_id)
         avg_temp = sum(values) / len(values)
         print(f"  {city}: {avg_temp:.1f}°C")
+
+
+Example 10: Real-Time Weather Forecast & Hourly Breakdown
+---------------------------------------------------------
+
+Retrieve the 7-day forecast and hourly forecast using coordinates (NWS Weather API):
+
+.. code-block:: python
+
+    from noaa import Weather
+
+    weather = Weather()
+
+    # Coordinates for Seattle, WA
+    lat, lon = 47.6062, -122.3321
+
+    # 7-day textual forecast
+    forecast = weather.get_forecast(lat, lon)
+    for period in forecast['properties']['periods'][:5]:
+        print(f"{period['name']}: {period['temperature']}°{period['temperatureUnit']} - {period['detailedForecast']}")
+
+    # Hourly forecast
+    hourly = weather.get_forecast(lat, lon, hourly=True)
+    for hour in hourly['properties']['periods'][:6]:
+        print(f"{hour['startTime'][11:16]}: {hour['temperature']}°{hour['temperatureUnit']} ({hour['shortForecast']})")
+
+Example 11: Real-Time Weather Alerts Tracking
+---------------------------------------------
+
+Monitor active weather warnings, watches, and advisories:
+
+.. code-block:: python
+
+    from noaa import Weather
+
+    weather = Weather()
+
+    # Active alerts in Florida
+    alerts = weather.get_active_alerts(area="FL")
+    print(f"Total active alerts in Florida: {len(alerts['features'])}")
+
+    for feature in alerts['features']:
+        props = feature['properties']
+        print(f"[{props['severity'].upper()}] {props['event']}: {props['headline']}")

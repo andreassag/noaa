@@ -1,7 +1,8 @@
 """Tests for custom exceptions."""
 
+from noaa.exceptions import APIError, NOAAException, ValidationError
+
 import pytest
-from noaa.exceptions import NOAAException, ValidationError, APIError
 
 
 class TestExceptions:
@@ -28,3 +29,9 @@ class TestExceptions:
         """Should preserve error message."""
         error = ValidationError("custom message")
         assert str(error) == "custom message"
+
+    def test_api_error_status_code(self):
+        """APIError should store optional status_code."""
+        error = APIError("Not Found", status_code=404)
+        assert str(error) == "Not Found"
+        assert error.status_code == 404

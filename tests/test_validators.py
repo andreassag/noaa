@@ -1,17 +1,18 @@
 """Tests for validation functions."""
 
-import pytest
+from noaa.exceptions import ValidationError
 from noaa.validators import (
-    validate_string_or_none,
-    validate_string_or_sequence,
+    validate_boolean,
     validate_limit,
     validate_offset,
     validate_sort_field,
     validate_sort_order,
+    validate_string_or_none,
+    validate_string_or_sequence,
     validate_units,
-    validate_boolean,
 )
-from noaa.exceptions import ValidationError
+
+import pytest
 
 
 class TestValidateStringOrNone:
@@ -78,9 +79,11 @@ class TestValidateLimit:
         validate_limit(1000)
 
     def test_invalid_type(self):
-        """Should reject non-integers."""
+        """Should reject non-integers and booleans."""
         with pytest.raises(ValidationError, match="should be an integer"):
             validate_limit("25")  # type: ignore
+        with pytest.raises(ValidationError, match="should be an integer"):
+            validate_limit(True)  # type: ignore
 
     def test_limit_too_high(self):
         """Should reject limits over 1000."""
@@ -102,9 +105,16 @@ class TestValidateOffset:
         validate_offset(100)
 
     def test_invalid_type(self):
-        """Should reject non-integers."""
+        """Should reject non-integers and booleans."""
         with pytest.raises(ValidationError, match="should be an integer"):
             validate_offset("0")  # type: ignore
+        with pytest.raises(ValidationError, match="should be an integer"):
+            validate_offset(False)  # type: ignore
+
+    def test_negative_offset(self):
+        """Should reject negative offsets."""
+        with pytest.raises(ValidationError, match="non-negative"):
+            validate_offset(-1)
 
 
 class TestValidateSortField:
@@ -185,3 +195,90 @@ class TestValidateBoolean:
         """Should reject strings."""
         with pytest.raises(ValidationError, match="should be a boolean"):
             validate_boolean("true", "param")
+
+
+class TestWeatherValidators:
+    """Tests for Weather API and helper validators."""
+
+    def test_validate_non_empty_string(self):
+        """Should validate non-empty strings."""
+        from noaa.validators import validate_non_empty_string
+
+        validate_non_empty_string("hello", "field")
+        with pytest.raises(
+            ValidationError, match="must be a non-empty string"
+        ):
+            validate_non_empty_string("", "field")
+        with pytest.raises(
+            ValidationError, match="must be a non-empty string"
+        ):
+            validate_non_empty_string("   ", "field")
+        with pytest.raises(
+            ValidationError, match="must be a non-empty string"
+        ):
+            validate_non_empty_string(None, "field")
+
+    def test_validate_coordinates(self):
+        """Should validate latitude and longitude within bounds."""
+        from noaa.validators import validate_coordinates
+
+        lat, lon = validate_coordinates(40.7128, -74.0060)
+        assert lat == 40.7128
+        assert lon == -74.0060
+
+        with pytest.raises(ValidationError, match="numeric"):
+            validate_coordinates("40.7", -74.0)
+        with pytest.raises(ValidationError, match="numeric"):
+            validate_coordinates(True, -74.0)
+        with pytest.raises(ValidationError, match="latitude"):
+            validate_coordinates(91.0, -74.0)
+        with pytest.raises(ValidationError, match="latitude"):
+            validate_coordinates(-91.0, -74.0)
+        with pytest.raises(ValidationError, match="longitude"):
+            validate_coordinates(40.0, 181.0)
+        with pytest.raises(ValidationError, match="longitude"):
+            validate_coordinates(40.0, -181.0)
+
+    def test_validate_positive_int(self):
+        """Should validate positive integers."""
+        from noaa.validators import validate_positive_int
+
+        validate_positive_int(0, "num", allow_zero=True)
+        validate_positive_int(10, "num", allow_zero=False)
+
+        with pytest.raises(ValidationError, match="integer"):
+            validate_positive_int("10", "num")
+        with pytest.raises(ValidationError, match="integer"):
+            validate_positive_int(True, "num")
+        with pytest.raises(ValidationError, match="non-negative"):
+            validate_positive_int(-1, "num", allow_zero=True)
+        with pytest.raises(ValidationError, match="greater than 0"):
+            validate_positive_int(0, "num", allow_zero=False)
+
+    def test_validate_weather_units(self):
+        """Should validate us or si units."""
+        from noaa.validators import validate_weather_units
+
+        validate_weather_units(None)
+        validate_weather_units("us")
+        validate_weather_units("si")
+        validate_weather_units("US")
+
+        with pytest.raises(ValidationError, match="must be one of"):
+            validate_weather_units("metric")
+        with pytest.raises(ValidationError, match="must be one of"):
+            validate_weather_units(123)  # type: ignore
+
+    def test_validate_zone_type(self):
+        """Should validate NWS zone types."""
+        from noaa.validators import validate_zone_type
+
+        validate_zone_type(None)
+        validate_zone_type("forecast")
+        validate_zone_type("land")
+        validate_zone_type("marine")
+
+        with pytest.raises(ValidationError, match="must be one of"):
+            validate_zone_type("ocean")
+        with pytest.raises(ValidationError, match="must be one of"):
+            validate_zone_type(123)  # type: ignore

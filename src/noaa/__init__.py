@@ -1,7 +1,15 @@
-"""NOAA Climate Data Online API client package."""
+"""NOAA Climate Data Online and National Weather Service API client package."""
 
-from .client import NOAA
-from .exceptions import NOAAException, ValidationError, APIError
+from noaa.client import NOAA, Climate
+from noaa.exceptions import APIError, NOAAException, ValidationError
+from noaa.weather import Weather
 
-__all__ = ["NOAA", "NOAAException", "ValidationError", "APIError"]
-__version__ = "v0.2.2"
+__all__ = [
+    "NOAA",
+    "Climate",
+    "Weather",
+    "NOAAException",
+    "ValidationError",
+    "APIError",
+]
+__version__ = "1.0.0"

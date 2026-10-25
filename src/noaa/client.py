@@ -1,38 +1,55 @@
 """NOAA Climate Data Online API client."""
 
+import datetime
 import urllib.parse
-from typing import Optional, Union, Sequence
+from typing import Optional, Sequence, Union
 
-from .exceptions import ValidationError
-from .validators import (
-    validate_string_or_none,
-    validate_string_or_sequence,
+from noaa.exceptions import ValidationError
+from noaa.utils import (
+    build_query_params,
+    join_ids,
+    make_api_request,
+    parse_date,
+)
+from noaa.validators import (
+    validate_boolean,
     validate_limit,
+    validate_non_empty_string,
     validate_offset,
     validate_sort_field,
     validate_sort_order,
+    validate_string_or_none,
+    validate_string_or_sequence,
     validate_units,
-    validate_boolean,
 )
-from .utils import parse_date, join_ids, build_query_params, make_api_request
-
 
 IdType = Optional[Union[str, Sequence[str]]]
+DateType = Optional[Union[str, datetime.date, datetime.datetime]]
+RequiredDateType = Union[str, datetime.date, datetime.datetime]
 
 
-class NOAA:
+class Climate:
     """Client for interfacing with NOAA Climate Data Online API.
 
     :param token: Access token from NOAA
     :type token: str
+    :param timeout: Request timeout in seconds, defaults to 30.0
+    :type timeout: float
     """
 
     BASE_URL = "https://www.ncdc.noaa.gov/cdo-web/api/v2/"
 
-    def __init__(self, token: str):
+    def __init__(self, token: str, timeout: float = 30.0) -> None:
         if not isinstance(token, str) or not token:
             raise ValidationError("token must be a non-empty string")
+        if (
+            isinstance(timeout, bool)
+            or not isinstance(timeout, (int, float))
+            or timeout <= 0
+        ):
+            raise ValidationError("timeout must be a positive number")
         self._headers = {"token": token}
+        self.timeout = float(timeout)
 
     def get_datasets(
         self,
@@ -40,8 +57,8 @@ class NOAA:
         data_type_id: IdType = None,
         location_id: IdType = None,
         station_id: IdType = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: DateType = None,
+        end_date: DateType = None,
         sort_field: Optional[str] = None,
         sort_order: str = "asc",
         limit: int = 25,
@@ -53,8 +70,8 @@ class NOAA:
         :param data_type_id: Data type identifier(s), defaults to None
         :param location_id: Location identifier(s), defaults to None
         :param station_id: Station identifier(s), defaults to None
-        :param start_date: Start date in ISO format, defaults to None
-        :param end_date: End date in ISO format, defaults to None
+        :param start_date: Start date, defaults to None
+        :param end_date: End date, defaults to None
         :param sort_field: Field to sort by, defaults to None
         :param sort_order: Sort order ('asc' or 'desc'), defaults to "asc"
         :param limit: Maximum results (0-1000), defaults to 25
@@ -86,8 +103,8 @@ class NOAA:
         dataset_id: IdType = None,
         location_id: IdType = None,
         station_id: IdType = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: DateType = None,
+        end_date: DateType = None,
         sort_field: Optional[str] = None,
         sort_order: str = "asc",
         limit: int = 25,
@@ -99,8 +116,8 @@ class NOAA:
         :param dataset_id: Dataset identifier(s), defaults to None
         :param location_id: Location identifier(s), defaults to None
         :param station_id: Station identifier(s), defaults to None
-        :param start_date: Start date in ISO format, defaults to None
-        :param end_date: End date in ISO format, defaults to None
+        :param start_date: Start date, defaults to None
+        :param end_date: End date, defaults to None
         :param sort_field: Field to sort by, defaults to None
         :param sort_order: Sort order ('asc' or 'desc'), defaults to "asc"
         :param limit: Maximum results (0-1000), defaults to 25
@@ -133,8 +150,8 @@ class NOAA:
         location_id: IdType = None,
         station_id: IdType = None,
         data_category_id: IdType = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: DateType = None,
+        end_date: DateType = None,
         sort_field: Optional[str] = None,
         sort_order: str = "asc",
         limit: int = 25,
@@ -147,8 +164,8 @@ class NOAA:
         :param location_id: Location identifier(s), defaults to None
         :param station_id: Station identifier(s), defaults to None
         :param data_category_id: Data category identifier(s), defaults to None
-        :param start_date: Start date in ISO format, defaults to None
-        :param end_date: End date in ISO format, defaults to None
+        :param start_date: Start date, defaults to None
+        :param end_date: End date, defaults to None
         :param sort_field: Field to sort by, defaults to None
         :param sort_order: Sort order ('asc' or 'desc'), defaults to "asc"
         :param limit: Maximum results (0-1000), defaults to 25
@@ -179,8 +196,8 @@ class NOAA:
         self,
         location_category_id: Optional[str] = None,
         dataset_id: IdType = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: DateType = None,
+        end_date: DateType = None,
         sort_field: Optional[str] = None,
         sort_order: str = "asc",
         limit: int = 25,
@@ -188,10 +205,10 @@ class NOAA:
     ) -> dict:
         """Get available location categories or info on a specific category.
 
-        :param location_category_id: Location category identifier, defaults to None
+        :param location_category_id: Location category id, defaults to None
         :param dataset_id: Dataset identifier(s), defaults to None
-        :param start_date: Start date in ISO format, defaults to None
-        :param end_date: End date in ISO format, defaults to None
+        :param start_date: Start date, defaults to None
+        :param end_date: End date, defaults to None
         :param sort_field: Field to sort by, defaults to None
         :param sort_order: Sort order ('asc' or 'desc'), defaults to "asc"
         :param limit: Maximum results (0-1000), defaults to 25
@@ -221,8 +238,8 @@ class NOAA:
         dataset_id: IdType = None,
         location_category_id: IdType = None,
         data_category_id: IdType = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: DateType = None,
+        end_date: DateType = None,
         sort_field: Optional[str] = None,
         sort_order: str = "asc",
         limit: int = 25,
@@ -232,10 +249,10 @@ class NOAA:
 
         :param location_id: Location identifier, defaults to None
         :param dataset_id: Dataset identifier(s), defaults to None
-        :param location_category_id: Location category identifier(s), defaults to None
-        :param data_category_id: Data category identifier(s), defaults to None
-        :param start_date: Start date in ISO format, defaults to None
-        :param end_date: End date in ISO format, defaults to None
+        :param location_category_id: Location category identifier(s)
+        :param data_category_id: Data category identifier(s)
+        :param start_date: Start date, defaults to None
+        :param end_date: End date, defaults to None
         :param sort_field: Field to sort by, defaults to None
         :param sort_order: Sort order ('asc' or 'desc'), defaults to "asc"
         :param limit: Maximum results (0-1000), defaults to 25
@@ -269,8 +286,8 @@ class NOAA:
         data_category_id: IdType = None,
         data_type_id: IdType = None,
         extent: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: DateType = None,
+        end_date: DateType = None,
         sort_field: Optional[str] = None,
         sort_order: str = "asc",
         limit: int = 25,
@@ -281,11 +298,11 @@ class NOAA:
         :param station_id: Station identifier, defaults to None
         :param dataset_id: Dataset identifier(s), defaults to None
         :param location_id: Location identifier(s), defaults to None
-        :param data_category_id: Data category identifier(s), defaults to None
-        :param data_type_id: Data type identifier(s), defaults to None
+        :param data_category_id: Data category identifier(s)
+        :param data_type_id: Data type identifier(s)
         :param extent: Geographic extent for search, defaults to None
-        :param start_date: Start date in ISO format, defaults to None
-        :param end_date: End date in ISO format, defaults to None
+        :param start_date: Start date, defaults to None
+        :param end_date: End date, defaults to None
         :param sort_field: Field to sort by, defaults to None
         :param sort_order: Sort order ('asc' or 'desc'), defaults to "asc"
         :param limit: Maximum results (0-1000), defaults to 25
@@ -316,8 +333,8 @@ class NOAA:
     def get_data(
         self,
         dataset_id: str,
-        start_date: str,
-        end_date: str,
+        start_date: RequiredDateType,
+        end_date: RequiredDateType,
         data_type_id: IdType = None,
         location_id: IdType = None,
         station_id: IdType = None,
@@ -331,8 +348,8 @@ class NOAA:
         """Get climate data from CDO.
 
         :param dataset_id: Dataset identifier (required)
-        :param start_date: Start date in ISO format (required)
-        :param end_date: End date in ISO format (required)
+        :param start_date: Start date in ISO format or date object (required)
+        :param end_date: End date in ISO format or date object (required)
         :param data_type_id: Data type identifier(s), defaults to None
         :param location_id: Location identifier(s), defaults to None
         :param station_id: Station identifier(s), defaults to None
@@ -341,9 +358,15 @@ class NOAA:
         :param sort_order: Sort order ('asc' or 'desc'), defaults to "asc"
         :param limit: Maximum results (0-1000), defaults to 25
         :param offset: Result offset, defaults to 0
-        :param include_metadata: Include metadata in response, defaults to False
+        :param include_metadata: Include metadata in response
         :return: API response data
         """
+        validate_non_empty_string(dataset_id, "dataset_id")
+        if start_date is None:
+            raise ValidationError("start_date must be provided")
+        if end_date is None:
+            raise ValidationError("end_date must be provided")
+
         return self._request(
             endpoint="data",
             dataset_id=dataset_id,
@@ -370,8 +393,8 @@ class NOAA:
         location_id: IdType = None,
         location_category_id: IdType = None,
         station_id: IdType = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: DateType = None,
+        end_date: DateType = None,
         extent: Optional[str] = None,
         units: str = "metric",
         sort_field: Optional[str] = None,
@@ -428,4 +451,7 @@ class NOAA:
         url = urllib.parse.urljoin(self.BASE_URL, endpoint)
         full_url = f"{url}?{query_string}" if query_string else url
 
-        return make_api_request(full_url, self._headers)
+        return make_api_request(full_url, self._headers, timeout=self.timeout)
+
+
+NOAA = Climate

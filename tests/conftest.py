@@ -1,8 +1,9 @@
 """Shared pytest fixtures for NOAA API tests."""
 
 import json
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture

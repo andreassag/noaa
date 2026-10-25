@@ -1,15 +1,12 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "monthly"
       day: "thursday"
       time: "06:00"
       timezone: "Europe/Oslo"
-    allow:
-      - dependency-name: "sphinx"
-        dependency-type: "production"
     labels:
       - "dependencies"
       - "python"

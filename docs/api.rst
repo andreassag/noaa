@@ -3,10 +3,18 @@ API Reference
 
 This page contains the complete API reference for the NOAA Climate API client.
 
-Client
-------
+Climate Client
+--------------
 
 .. automodule:: noaa.client
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Weather Client
+--------------
+
+.. automodule:: noaa.weather
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,12 +1,12 @@
 Quickstart Guide
 ================
 
-This guide will help you get started with the NOAA Climate API client.
+This guide will help you get started with the NOAA Climate & Weather API client.
 
 Installation
 ------------
 
-Install the package using pip::
+Using pip::
 
     pip install noaa-climate
 
@@ -14,25 +14,53 @@ Or using uv::
 
     uv pip install noaa-climate
 
-Getting Your API Token
------------------------
+Getting Your Climate API Token
+------------------------------
+
+To use the Climate Data Online API (``Climate`` / ``NOAA``), you need an API token:
 
 1. Go to https://www.ncdc.noaa.gov/cdo-web/token
 2. Enter your email address
 3. Check your email for the token (usually arrives within minutes)
 4. Save your token securely
 
-Basic Usage
------------
+Note: The Weather API (``Weather``) does NOT require an API token.
+
+Weather API Usage (NWS)
+-----------------------
+
+Initialize the Weather client (no token needed):
+
+.. code-block:: python
+
+    from noaa import Weather
+
+    weather = Weather()
+
+    # Get points metadata and 7-day forecast
+    forecast = weather.get_forecast(37.7749, -122.4194)  # San Francisco
+    for period in forecast['properties']['periods']:
+        print(f"{period['name']}: {period['temperature']}°{period['temperatureUnit']} - {period['shortForecast']}")
+
+    # Get active weather alerts
+    alerts = weather.get_active_alerts(area="CA")
+    print(f"Active alerts in CA: {len(alerts['features'])}")
+
+    # Get latest observations for an airport station
+    latest = weather.get_latest_observation("KSFO")
+    print(latest['properties']['temperature'])
+
+Climate API Usage (CDO)
+-----------------------
 
 Initialize the Client
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-    from noaa import NOAA
+    from noaa import Climate  # or NOAA
 
-    client = NOAA("your-api-token-here")
+    client = Climate("your-api-token-here")
 
 Explore Available Datasets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -122,20 +150,22 @@ For large result sets, use limit and offset:
 Error Handling
 --------------
 
-The library raises ``ValidationError`` for invalid inputs:
+The library raises ``ValidationError`` for invalid inputs and ``APIError`` for API/network issues:
 
 .. code-block:: python
 
-    from noaa import NOAA
-    from noaa.exceptions import ValidationError
+    from noaa import Climate, Weather
+    from noaa.exceptions import APIError, ValidationError
 
-    client = NOAA("your-token")
+    client = Climate("your-token")
 
     try:
         # This will raise ValidationError (limit too high)
         data = client.get_datasets(limit=2000)
     except ValidationError as e:
         print(f"Invalid input: {e}")
+    except APIError as e:
+        print(f"API Error (status {e.status_code}): {e}")
 
 Next Steps
 ----------

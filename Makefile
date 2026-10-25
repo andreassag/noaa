@@ -27,12 +27,13 @@ docs: install
 	@echo "Documentation built in docs/_build/html/index.html"
 
 lint: install
-	uv run ruff check src/noaa/
+	uv run ruff format --check .
+	uv run ruff check .
 	uv run pyright src/noaa/
 
 format: install
-	uv run ruff format src/noaa/ tests/
-	uv run ruff check --fix src/noaa/ tests/
+	uv run ruff format .
+	uv run ruff check --fix .
 
 docker:
 	@echo "Building Docker image..."

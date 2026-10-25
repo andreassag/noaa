@@ -2,9 +2,10 @@
 
 import os
 import sys
+
 import tomllib
 
-sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath("../src"))
 
 
 def get_version():
@@ -20,7 +21,7 @@ def get_version():
 
 # -- Project information -----------------------------------------------------
 
-project = "NOAA Climate API"
+project = "NOAA API"
 copyright = "2024, Andreas Sagen"
 author = "Andreas Sagen"
 version = get_version()

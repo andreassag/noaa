@@ -47,11 +47,12 @@ jobs:
         uv run pytest --cov=noaa --cov-report=xml
 
     - name: Upload coverage to Codecov
+      if: github.actor != 'dependabot[bot]'
       uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: andreassag/noaa
-        fail_ci_if_error: true
+        fail_ci_if_error: false
         files: ./coverage.xml
         flags: unittests
         verbose: true
@@ -72,3 +73,6 @@ jobs:
 
       - name: Run Ruff linter
         run: uv run ruff check --output-format=github .
+
+      - name: Run Pyright
+        run: uv run pyright src/noaa/

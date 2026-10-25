@@ -1,19 +1,27 @@
 """Tests for the NOAA API client."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from noaa.client import NOAA
+from noaa.client import NOAA, Climate
 from noaa.exceptions import ValidationError
+
+import pytest
 
 
 class TestNOAAInit:
-    """Tests for NOAA client initialization."""
+    """Tests for NOAA/Climate client initialization."""
 
     def test_valid_token(self):
         """Should accept valid token."""
         client = NOAA("valid-token")
         assert client._headers == {"token": "valid-token"}
+        assert client.timeout == 30.0
+
+    def test_climate_alias(self):
+        """Climate and NOAA should be identical."""
+        assert Climate is NOAA
+        client = Climate("valid-token", timeout=12.5)
+        assert client.timeout == 12.5
 
     def test_empty_token(self):
         """Should reject empty token."""
@@ -29,6 +37,15 @@ class TestNOAAInit:
         """Should reject non-string token."""
         with pytest.raises(ValidationError, match="non-empty string"):
             NOAA(12345)  # type: ignore
+
+    def test_invalid_timeout(self):
+        """Should reject invalid timeout values."""
+        with pytest.raises(ValidationError, match="timeout"):
+            NOAA("valid-token", timeout=-1)
+        with pytest.raises(ValidationError, match="timeout"):
+            NOAA("valid-token", timeout=0)
+        with pytest.raises(ValidationError, match="timeout"):
+            NOAA("valid-token", timeout=True)  # type: ignore
 
 
 class TestGetDatasets:
@@ -283,6 +300,25 @@ class TestGetData:
 
                 call_args = mock_request.call_args[1]
                 assert "includemetadata=" in call_args["url"]
+
+    def test_get_data_required_args(self, noaa_client):
+        """Should require dataset_id, start_date, and end_date."""
+        with pytest.raises(ValidationError, match="dataset_id"):
+            noaa_client.get_data(
+                dataset_id="", start_date="2023-01-01", end_date="2023-01-31"
+            )
+        with pytest.raises(ValidationError, match="start_date"):
+            noaa_client.get_data(
+                dataset_id="GHCND",
+                start_date=None,
+                end_date="2023-01-31",  # type: ignore
+            )
+        with pytest.raises(ValidationError, match="end_date"):
+            noaa_client.get_data(
+                dataset_id="GHCND",
+                start_date="2023-01-01",
+                end_date=None,  # type: ignore
+            )
 
 
 class TestRequestValidation:
