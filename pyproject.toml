@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build >= 0.9.11"]
+requires = ["uv_build>=0.13.5"]
 build-backend = "uv_build"
 
 [project]
@@ -34,7 +34,7 @@ module-name = "noaa"
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.3",
+    "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "pyright",
     "ruff",

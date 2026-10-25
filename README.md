@@ -6,7 +6,7 @@
 
 A modern Python client for NOAA's **Climate Data Online (CDO)** and **National Weather Service (NWS)** APIs. This library provides a clean, unified interface to retrieve historical climate archives as well as live weather forecasts, alerts, and observations.
 
-[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Features
